@@ -1,0 +1,14 @@
+---
+title: "Project HAL Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<a href="http://people.uncw.edu/hinese/HAL/HAL%20Web%20Page.htm">Project HAL</a> was brought to my attention in *The Color of Lynching* (2011) by Lisa D. Cook available <a href="https://msu.edu/~lisacook/hist_meths_lynch_paper_final.pdf">here</a>. In Cook's paper, she discusses a particular data collection bias that struck chills in me. Very few times in my statistics education was I forced to think about where my data came from, although now in my graduate career, I feel that it is the first thing I want to understand. After reading Cook's report, I immediately Google searched for the contemporary datasets she cited. Upon downloading the data from Project HAL, I felt curious, but upon opening the spreadsheet, I could not fully express how painful it was to know that the data I was planning on analyzing was not about cell phone usage or length of a flower petal. The data were about a deep, complex, and painfully twisted history which must be handled with care and respect for those who are deeply affected by it.
+
+## Bias
+
+## Analysis
