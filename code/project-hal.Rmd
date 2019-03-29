@@ -1,6 +1,8 @@
 ---
 title: "Project HAL Analysis"
-output: html_document
+output:
+  html_document:
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE, warning=FALSE, message=FALSE}
@@ -16,12 +18,12 @@ opts_chunk$set(echo=FALSE)
 ```
 
 
-<a href="http://people.uncw.edu/hinese/HAL/HAL%20Web%20Page.htm">Project HAL</a> was brought to my attention in *The Color of Lynching* (2011) by Lisa D. Cook available <a href="https://msu.edu/~lisacook/hist_meths_lynch_paper_final.pdf">here</a>. In Cook's paper, she discusses a particular data collection bias that struck chills in me. After reading Cook's report, I immediately Google searched for the contemporary datasets she cited. The curiousity I had prior to downloading the HAL data was certainly sensitive to the subject matter, but not fully thought out. Not until opening the spredsheet did I realize what I was looking at. The rows were not about subjects and their cell phone usage or flowers and their associated petal lengths. These data were a murder list, each victim caught in a deep, complex, and painfully twisted history.
+<a href="http://people.uncw.edu/hinese/HAL/HAL%20Web%20Page.htm">Project HAL</a> was brought to my attention in "The Color of Lynching" (2011) by Lisa D. Cook available <a href="https://msu.edu/~lisacook/hist_meths_lynch_paper_final.pdf">here</a>. In Cook's paper, she discusses a particular data collection bias that struck chills in me. I immediately Google searched after reading Cook's paper for one of the contemporary datasets she cited by Tolnay and Beck. The curiousity I had prior to downloading the HAL data was certainly sensitive to the subject matter, but not fully thought out. Not until opening the spredsheet did I realize what I was looking at. The rows were not about subjects and their cell phone usage or flowers and their petal lengths. These data were a murder list, each victim caught in a deep, complex, and painfully twisted history.
 
-It was not emphasized to me till recently to ask where my data came from, and not until today have I worked with data with an answer spiraling out of control as more and more of the USA's racist history becomes popular knowledge. What Cook emphasizes is that whomever analyze data on lynchings must be handle it with care. In my analysis, I'm going to respect those who are deeply affected by these murders and be clear about where my (the nation's) knowledge lacks.
+What Cook emphasizes is that whomever analyze data on lynchings must handle it with care. The HAL dataset is not just a public record of systematic, illegal murder, but also oversimplified as a result of a clear apathy for the people who were murdered.
 
 ## The HAL Dataset
-The HAL dataset is a work by Stewart Tolnay and E.M. Beck, made available online by Project HAL. The data's origins are from the NAACP Lynching Records at Tuskegee Institute, Tuskegee, Alabama. The dataset grows with contributions made from the public [2].
+The HAL dataset is a work by Stewart Tolnay and E.M. Beck, made available online by Project HAL. The data's origins are from the National Association for the Advancement of Colored People (NAACP) Lynching Records at Tuskegee Institute. The dataset grows with contributions made from the public [2].
 
 ```{r, message=FALSE, warning=FALSE}
 hal_data <- read_excel("../data/HAL.XLS")
@@ -29,34 +31,113 @@ hal_data <- hal_data %>% select(State, Year, Mo, Day, Victim, County, Race, Sex,
 ```
 
 
-The HAL dataset contains `r nrow(hal_data)` records of lynchings taken place in the South. "Lyching" is defined by the standards of the National Association for the Advancement of Colored People (NAACP) [1]. Below is a list of 10 of the `r nrow(hal_data)` people murdered. These 10 victims' date and location of death, race, sex, what kind of mob targeted them, and under what offense they were murdered. Notably, race is binary -- a subject is either "black" or "white" (all those who were non-black or mixed race) [1].
+"Lynching" is defined by the standards of the NAACP [1]. The HAL dataset contains `r nrow(hal_data)` records of lynchings taken place in the South. <a href="https://www.naacp.org/history-of-lynchings/">According to the NAACP</a>, between the years of 1882-1968, 4,743 lynchings took place in the United States with many left unrecorded [3]. Project HAL currently covers some of the deaths between the years of `r range(hal_data %>% pull(Year), na.rm=TRUE)[1]` and `r range(hal_data %>% pull(Year), na.rm=TRUE)[2]`.
+
+Below is a list of 10 of the `r nrow(hal_data)` people murdered. These 10 victims' date and location of death, race, sex, what kind of mob targeted them, and under what offense they were murdered. Notably, race is binary -- a subject is either "black" or "white" (all those who were non-black or mixed race) [1].
 
 ```{r}
 kable(hal_data[runif(10, 0, nrow(hal_data)),])
 ```
 
+## Per Offense
+Lynching began in the late 19th century by whites in order to "protect white women" [3].
+
+The top 10 offenses that "motivated" the lynchings are displayed below. The first offense is murder. Rape is a repeated offense that files under several labels of assault. Robbery and theft are also repeated offenses. As far as data collection goes here, I think we can do better.
+
+```{r}
+cause_data <- data.frame(sort(hal_data %>% select(Offense) %>% table, decreasing=TRUE))
+names(cause_data) <- c("Offense", "Frequency")
+# kable(head(cause_data, 20))
+```
+
+```{r}
+ggplot(head(cause_data, 10), aes(x=Offense, y=Frequency, fill=Offense)) + geom_bar(stat="identity") + theme_excel_new() + scale_fill_tableau() + theme(axis.text.x = element_text(angle = 40, hjust = 1)) + ggtitle("Lynch-motivating 'offenses' by all victims")
+```
+
+```{r, eval=FALSE}
+kable(cause_data[runif(20,21,nrow(cause_data)),])
+```
+
+To make a more informative bar plot, I can sort the offenses within the dataset by merging offenses of the same nature under the same count. The following code block shows how I filtered the data. I want to be clear that I am not trying to erase any original causes or content. This relabeling is for data uniformity for visualization purposes alone.
+
+```{r, echo=TRUE}
+hal_data_filter <- hal_data
+hal_data_filter$Offense <- ifelse(grepl("plot|attempt|att|attempted", tolower(hal_data_filter$Offense)), "Attempt", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("girl's bedroom|girl's room|woman's room|woman's bedroom|chamber|lady's room", tolower(hal_data_filter$Offense)), "Girl's room", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("white woman|white girl|women|woman", tolower(hal_data_filter$Offense)), "White woman", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("rape", tolower(hal_data_filter$Offense)), "Rape", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("threat", tolower(hal_data_filter$Offense)), "Threat", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("implicated|complicity|accomplice|aided murderer|father of|brother of", tolower(hal_data_filter$Offense)), "Implicated", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("arson|incendiarism|dynamiting|barn|incendiary", tolower(hal_data_filter$Offense)), "Arson", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("assault", tolower(hal_data_filter$Offense)), "Assault", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("robbery|burglary|theft|stealing", tolower(hal_data_filter$Offense)), "Robbery", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("bad character", tolower(hal_data_filter$Offense)), "Bad character", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("political", tolower(hal_data_filter$Offense)), "Political", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("murder", tolower(hal_data_filter$Offense)), "Murder", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("insult", tolower(hal_data_filter$Offense)), "Insult", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("race", tolower(hal_data_filter$Offense)), "Race", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("shot|shooting|shoot", tolower(hal_data_filter$Offense)), "Shooting", hal_data_filter$Offense)
+hal_data_filter$Offense <- ifelse(grepl("white man|white men", tolower(hal_data_filter$Offense)), "White man", hal_data_filter$Offense)
+```
+
+### White Offenses
+Here are the top 10 offenses "white victims" (all non-blacks or mixed race victims) were lynched for.
+
+```{r}
+white_df <- data.frame(sort(hal_data_filter %>% filter(Race=="Wht") %>% pull(Offense) %>% table, decreasing=TRUE))
+names(white_df) <- c("Offense", "Frequency")
+kable(head(white_df, 10))
+```
+
+### Black Offenses
+Here are the top 10 offenses among black victims. I will also visualize the offenses for black victims below.
+
+```{r}
+black_df <- data.frame(sort(hal_data_filter %>% filter(Race=="Blk") %>% pull(Offense) %>% table, decreasing=TRUE))
+names(black_df) <- c("Offense", "Frequency")
+kable(head(black_df, 10))
+```
+
+```{r}
+ggplot(head(black_df, 10), aes(x=Offense, y=Frequency, fill=Offense)) + geom_bar(stat="identity") + theme_excel_new() + scale_fill_tableau() + theme(axis.text.x = element_text(angle = 40, hjust = 1)) + ggtitle("Lynch-motivating 'offenses' by black victims")
+```
+
+Above, murder is the highest cited offense for all of the lynchings, and rape is second. The third category is called "Attempt" in which I counted all the victims that were murdered for "attempting to commit a crime". I also have a category that has to do with "Implications" that the victim aided in criminal activity. Again, none of these murders were tried in court or "proven" to be fact (I say this with caution because I am not sure how much a trial would have helped these victims). There are many more questionable offenses throughout this database. Below are 10 more randomly picked offenses that black people were targeted for lynchings.
+
+```{r}
+kable(black_df[runif(10, 11, nrow(black_df)),])
+```
+
+```{r, eval=FALSE}
+hal_data %>% filter(grepl("Elope", Offense))
+hal_data %>% filter(grepl("Mistaken", Offense))
+```
+
+Miscegenation (interracial relations) was a repeated offense. In 1897, Andy Beard was lynched for eloping with a white woman. In 1888 and 1905, Jim Torney and Joe Woodman were also murdered under the same offense. It would not surprise me if this were the true motivation to more lynchings. Furthermore in this dataset, 13 were murdered under a mistaken identity, and 88 offenses were unknown.
+
+
 ## Per State
-Using the `dplyr` package, I was able to aggregate data based on year and state of lynching. Here are the data for 1882.
+Although lynching occurred in other states, most of the nation's lynching happened in the South [3]. The HAL dataset covers 9 southern states. Using the `dplyr` package, I was able to aggregate data based on year and state of lynching. Here are the data for 1882.
 
 ```{r}
 year_data <- hal_data %>% group_by(Year, State) %>% summarize(n=n())
 kable(head(year_data, 9))
 ```
 
-The following barplot shows the number of records for all of the years per state. This dataset contains lynchings between the years of `r range(hal_data %>% pull(Year), na.rm=TRUE)[1]` and `r range(hal_data %>% pull(Year), na.rm=TRUE)[2]`.
+The following barplot shows the number of records for all of the years per state.
 
 ```{r}
 ggplot(hal_data, aes(x=State)) + geom_bar(aes(fill=Race)) + theme_excel_new() + scale_fill_tableau() + ggtitle("Lynchings per state, colored by race")
 ```
 
-Over time for each state, we see almost no overall trends aside from 1890 brought about more lynchings than other time periods. North Carolina overall had the fewest lynchings among the 9 states.
+Over time for each state, we see that 1890 brought about more lynchings than other time periods, and some states curbed their lynching activity in later years. North Carolina overall had the fewest lynchings among the 9 states.
 
 ```{r, warning=FALSE, message=FALSE}
 ggplot(year_data, aes(x=Year, y=n, col=State)) + geom_line() + facet_wrap(~State)  + theme_excel_new() + scale_color_tableau() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ggtitle("Time series of lynchings per state")
 ```
 
 ## Per Race
-In this dataset, `r nrow(hal_data %>% filter(Race=="Blk") %>% filter(Sex=="Male")) / nrow(hal_data) * 100`% of lynchings were done to black males. Below is a table that shows the absolute values of lynchings (column `n`) and their relative frequency to which sex they were classified under.
+In this dataset, `r round(nrow(hal_data %>% filter(Race=="Blk") %>% filter(Sex=="Male")) / nrow(hal_data), 4) * 100`% of lynchings were done to black males. Below is a table that shows the absolute values of lynchings (column `n`) and their relative frequency (column `freq`) to which sex they were classified under.
 
 ```{r}
 race_sex_data <- hal_data %>% group_by(Race, Sex) %>% summarize(n=n())
@@ -83,11 +164,10 @@ ggplot(hal_data, aes(x=Race)) + geom_bar(aes(fill=Race)) + theme_excel_new() + s
 
 The following two plots hold similar information. One displays the absolute number of murders, the other relative to sex.
 
+### Absolute Counts and Relative to Sex
 ```{r}
 ggplot(race_sex_data, aes(x=Race, y=n)) + geom_bar(aes(fill=Race), stat="identity") + facet_wrap(~Sex) + theme_excel_new() + scale_fill_tableau() + ggtitle("Distribution of lynchings per race and sex (Absolute)")
 ```
-
-If it weren't already clear (by the history that all grade children should learn of the United States) that black people were targeted, this bar plot should make it so.
 
 ```{r}
 ggplot(race_sex_data, aes(x=Race, y=freq)) + geom_bar(aes(fill=Race), stat="identity") + facet_wrap(~Sex) + theme_excel_new() + scale_fill_tableau() + ggtitle("Distribution of lynchings per race and sex (Relative to sex)")
@@ -95,39 +175,6 @@ ggplot(race_sex_data, aes(x=Race, y=freq)) + geom_bar(aes(fill=Race), stat="iden
 
 According to Cook, the "fact that non-black victims of Chinese, Hispanic, Italian, Native American, and others of distinct ancestry are identified as “white” is especially problematic" (2011). In this dataset, `r nrow(hal_data %>% filter(Race %in% c("Wht", "Other", "Unk")))` victims were reported to be white, another race, or unknown. Thus, the bars would probably shift even less from the white category.
 
-
-## Per Offense
-The top 20 offenses that "motivated" the lynchings are listed below. The first offense is murder. Rape is a repeated offense that files under several labels of assault. 88 of the reasons were unknown. Robbery and theft are also repeated offenses. As far as data collection goes here, I think we can do better.
-
-```{r}
-cause_data <- data.frame(sort(hal_data %>% select(Offense) %>% table, decreasing=TRUE))
-names(cause_data) <- c("Offense", "Frequency")
-kable(head(cause_data, 20))
-```
-
-Here are another 20 randomly picked offenses from the dataset.
-
-```{r}
-set.seed(1965)
-kable(cause_data[runif(20,21,nrow(cause_data)),])
-```
-
-I can sort out offenses by merging offenses of the same nature under the same count. The following code block shows how I filtered the data.
-
-```{r, echo=TRUE}
-rape <- nrow(hal_data %>% filter(grepl("rape|sexual", tolower(Offense))) %>% filter(!grepl("murder", tolower(Offense))))
-murder <- nrow(hal_data %>% filter(grepl("murder", tolower(Offense))) %>% filter(!grepl("rape", tolower(Offense))))
-theft <- nrow(hal_data %>% filter(grepl("burglary|robbery|theft", tolower(Offense))) %>% filter(!grepl("rape|murder", tolower(Offense))))
-assault <- nrow(hal_data %>% filter(grepl("assault", tolower(Offense))) %>% filter(!grepl("rape", tolower(Offense))))
-updated_counts <- data.frame(offense=c("rape", "murder", "theft", "assault"), frequency=c(rape, murder, theft, assault))
-updated_counts <- updated_counts %>% mutate(offense=fct_reorder(offense, frequency, .desc = TRUE))
-```
-
-The resulting graph is below.
-
-```{r}
-ggplot(updated_counts, aes(x=offense, y=frequency, fill=offense)) + geom_bar(stat="identity") + theme_excel_new() + scale_fill_tableau() + ggtitle("Offenses that 'motivated' lynchings")
-```
 
 ## By Victim
 269 of these victims died with no name tied to their murder. Here are 15 of their records.
@@ -139,7 +186,7 @@ kable(unnamed_data[runif(15, 0, nrow(unnamed_data)),])
 
 More than `r nrow(hal_data)` were murdered under offenses untried by law, most of them black men.
 
-This list of murders I visualized are some layers to a multifaceted and tragically racist history in the United States. It is unknown to me how much data are false in this dataset due to racist records and systematic bias. It is unknown to me how many lynchings were not recorded due to the same reasons. In her paper, Cook urges further work to correct the data. Data tell stories, and this story is still incomplete.
+This list of murders I visualized are some layers to a multifaceted and tragically racist history in the United States. It is unknown to me how much of these data were biased due to systematic bias and how many more lynchings were not recorded due to the same reasons. In her paper, Cook urges further work to correct the data. Data tell stories, and this story is still incomplete.
 
 ## References
 I apologize for my poor referencing skills.
@@ -147,3 +194,5 @@ I apologize for my poor referencing skills.
 [1] Cook, Lisa D. "The Color of Lynching". 2011.
 
 [2] Project HAL.
+
+[3] NAACP. https://www.naacp.org/history-of-lynchings/.
