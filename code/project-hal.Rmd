@@ -3,12 +3,88 @@ title: "Project HAL Analysis"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+library(ggthemes)
+library(scales)
+opts_chunk$set(echo=FALSE)
 ```
 
-<a href="http://people.uncw.edu/hinese/HAL/HAL%20Web%20Page.htm">Project HAL</a> was brought to my attention in *The Color of Lynching* (2011) by Lisa D. Cook available <a href="https://msu.edu/~lisacook/hist_meths_lynch_paper_final.pdf">here</a>. In Cook's paper, she discusses a particular data collection bias that struck chills in me. Very few times in my statistics education was I forced to think about where my data came from, although now in my graduate career, I feel that it is the first thing I want to understand. After reading Cook's report, I immediately Google searched for the contemporary datasets she cited. Upon downloading the data from Project HAL, I felt curious, but upon opening the spreadsheet, I could not fully express how painful it was to know that the data I was planning on analyzing was not about cell phone usage or length of a flower petal. The data were about a deep, complex, and painfully twisted history which must be handled with care and respect for those who are deeply affected by it.
+**Personal to-do**   
+Read <a href="https://lynchinginamerica.eji.org/report/">this</a> soon.
 
-## Bias
+**Starting here**  
+<a href="http://people.uncw.edu/hinese/HAL/HAL%20Web%20Page.htm">Project HAL</a> was brought to my attention in *The Color of Lynching* (2011) by Lisa D. Cook available <a href="https://msu.edu/~lisacook/hist_meths_lynch_paper_final.pdf">here</a>. In Cook's paper, she discusses a particular data collection bias that struck chills in me. After reading Cook's report, I immediately Google searched for the contemporary datasets she cited. The curiousity I had prior to downloading the HAL data was certainly sensitive to the subject matter, but not fully thought out. Not until opening the spredsheet did I realize what I was looking at. The rows were not about subjects and their cell phone usage or flowers and their associated petal lengths. These data were a murder list, each victim caught in a deep, complex, and painfully twisted history.
 
-## Analysis
+It was not emphasized to me till recently to ask where my data came from, and not until today have I worked with data with an answer spiraling out of control as more and more of the USA's racist history becomes popular knowledge. What Cook emphasizes is that whomever analyze data on lynchings must be handle it with care. In my analysis, I'm going to respect for those who are deeply affected by these murders and be clear about where my (the nation's) knowledge lacks.
+
+## The HAL Dataset
+
+```{r, message=FALSE, warning=FALSE}
+hal_data <- read_excel("../data/HAL.XLS")
+hal_data <- hal_data %>% select(State, Year, Mo, Day, Victim, County, Race, Sex, Mob, Offense)
+```
+
+
+The HAL dataset contains `r nrow(hal_data)` records of lynchings taken place in the South. "Lyching" is defined by the standards of the National Association for the Advancement of Colored People (NAACP) [1]. Below is a list of 10 of the `r nrow(hal_data)` people murdered. These 10 victims' date and location of death, race, sex, what kind of mob targeted them, and under what offense they were murdered. Notably, race is binary -- a subject is either "black" or "white" (all those who were non-black or mixed race) [1].
+
+```{r}
+kable(hal_data[runif(10, 0, nrow(hal_data)),])
+```
+
+Using the `dplyr` package, I was able to aggregate data based on year and state of lynching. Here are the data for 1882.
+
+```{r}
+year_data <- hal_data %>% group_by(Year, State) %>% summarize(n=n())
+kable(head(year_data, 9))
+```
+
+Over time for each state, we see almost no overall trends aside from 1890 brought about more lynchings than other time periods. North Carolina overall had the fewest lynchings among the 9 states.
+
+```{r, warning=FALSE, message=FALSE}
+ggplot(year_data, aes(x=Year, y=n, col=State)) + geom_line() + facet_wrap(~State)  + theme_excel_new() + scale_color_tableau() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+```{r}
+race_sex_data <- hal_data %>% group_by(Race, Sex) %>% summarize(n=n())
+
+sex_totals <- race_sex_data %>% group_by(Sex) %>% summarize(sum(n))
+
+freq_col <- c()
+for (row in 1:nrow(race_sex_data)) {
+  ix <- which(sex_totals[,1]==as.character(race_sex_data[row, 2]))
+  freq <- race_sex_data[row,3] / sex_totals[ix,2]
+  freq_col <- c(freq_col, freq)
+}
+
+race_sex_data <- cbind(race_sex_data, freq=as.numeric(freq_col))
+
+kable(race_sex_data)
+```
+
+```{r}
+ggplot(race_sex_data, aes(x=Race, y=n)) + geom_bar(aes(fill=Race), stat="identity") + facet_wrap(~Sex) + theme_excel_new() + scale_fill_tableau()
+```
+
+```{r}
+ggplot(race_sex_data, aes(x=Race, y=freq)) + geom_bar(aes(fill=Race), stat="identity") + facet_wrap(~Sex) + theme_excel_new() + scale_fill_tableau()
+```
+
+"The fact that non-black victims of Chinese, Hispanic, Italian, Native American, and others of distinct ancestry are identified as “white” is especially problematic" (Cook 2011).
+
+```{r}
+ggplot(hal_data, aes(x=Race)) + geom_bar(aes(fill=Sex)) + theme_excel_new() + scale_fill_tableau()
+```
+
+```{r}
+ggplot(hal_data, aes(x=State)) + geom_bar(aes(fill=Race)) + theme_excel_new() + scale_fill_tableau()
+```
+
+## References
+
+[1] Cook
