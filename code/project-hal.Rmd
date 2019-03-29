@@ -1,8 +1,6 @@
 ---
 title: "Project HAL Analysis"
-output:
-  html_document:
-    code_folding: hide
+output: html_document
 ---
 
 ```{r setup, include=FALSE, warning=FALSE, message=FALSE}
