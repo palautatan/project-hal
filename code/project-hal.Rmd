@@ -18,7 +18,7 @@ opts_chunk$set(echo=FALSE)
 
 <a href="http://people.uncw.edu/hinese/HAL/HAL%20Web%20Page.htm">Project HAL</a> was brought to my attention in *The Color of Lynching* (2011) by Lisa D. Cook available <a href="https://msu.edu/~lisacook/hist_meths_lynch_paper_final.pdf">here</a>. In Cook's paper, she discusses a particular data collection bias that struck chills in me. After reading Cook's report, I immediately Google searched for the contemporary datasets she cited. The curiousity I had prior to downloading the HAL data was certainly sensitive to the subject matter, but not fully thought out. Not until opening the spredsheet did I realize what I was looking at. The rows were not about subjects and their cell phone usage or flowers and their associated petal lengths. These data were a murder list, each victim caught in a deep, complex, and painfully twisted history.
 
-It was not emphasized to me till recently to ask where my data came from, and not until today have I worked with data with an answer spiraling out of control as more and more of the USA's racist history becomes popular knowledge. What Cook emphasizes is that whomever analyze data on lynchings must be handle it with care. In my analysis, I'm going to respect for those who are deeply affected by these murders and be clear about where my (the nation's) knowledge lacks.
+It was not emphasized to me till recently to ask where my data came from, and not until today have I worked with data with an answer spiraling out of control as more and more of the USA's racist history becomes popular knowledge. What Cook emphasizes is that whomever analyze data on lynchings must be handle it with care. In my analysis, I'm going to respect those who are deeply affected by these murders and be clear about where my (the nation's) knowledge lacks.
 
 ## The HAL Dataset
 The HAL dataset is a work by Stewart Tolnay and E.M. Beck, made available online by Project HAL. The data's origins are from the NAACP Lynching Records at Tuskegee Institute, Tuskegee, Alabama. The dataset grows with contributions made from the public [2].
@@ -114,7 +114,7 @@ kable(cause_data[runif(20,21,nrow(cause_data)),])
 
 I can sort out offenses by merging offenses of the same nature under the same count. The following code block shows how I filtered the data.
 
-```{r, include=TRUE}
+```{r, echo=TRUE}
 rape <- nrow(hal_data %>% filter(grepl("rape|sexual", tolower(Offense))) %>% filter(!grepl("murder", tolower(Offense))))
 murder <- nrow(hal_data %>% filter(grepl("murder", tolower(Offense))) %>% filter(!grepl("rape", tolower(Offense))))
 theft <- nrow(hal_data %>% filter(grepl("burglary|robbery|theft", tolower(Offense))) %>% filter(!grepl("rape|murder", tolower(Offense))))
